@@ -3,12 +3,23 @@ from itertools import tee, ifilterfalse, ifilter
 
 def configure(conf):
     conf.find_program('pandoc')
+    conf.find_program('lhs2TeX')
 
 class pandoc(Task.Task):
     run_str = '${PANDOC} -r ${PFORMAT_READ} -w ${PFORMAT_WRITE} ' \
             '${PFLAGS} -o ${TGT} ${SRC}'
     color = 'PINK'
     shell = False
+
+class lhs2tex(Task.Task):
+    run_str = '${LHS2TEX} ${LHSFLAGS} -o ${TGT} ${SRC}'
+    color = 'BLUE'
+    shell = False
+
+class lhs_preamble(Task.Task):
+    run_str = 'echo %%include polycode.fmt > ${TGT[0]}'
+    color = 'BLUE'
+    shell = True
 
 @TaskGen.taskgen_method
 @TaskGen.before('process_source')
@@ -47,6 +58,23 @@ def process_pandoc(self, node):
     tsk.env['PFORMAT_READ'] = getattr(self, 'read_format', 'markdown')
     tsk.env['PFORMAT_WRITE'] = getattr(self, 'write_format', 'latex')
     tsk.dep_nodes += getattr(self, 'dep_nodes', [])
+    self.__dict__.setdefault('compiled_src', [])
+    self.compiled_src.extend(tsk.outputs)
+
+@TaskGen.extension('.pdlhs')
+def process_pandoc(self, node):
+    lhs_source = node.change_ext('.lhs', '.pdlhs')
+    lhs_preamble = self.bld.bldnode.find_or_declare('lhs-preable.lhs')
+    self.create_task('lhs_preamble', [], lhs_preamble)
+    tsk = self.create_task('pandoc', [node], lhs_source)
+    tsk.env.append_value('PFLAGS', Utils.to_list(getattr(self, 'flags', [])))
+    tsk.env['PFORMAT_READ'] = getattr(self, 'read_format', 'markdown') + '+lhs'
+    tsk.env['PFORMAT_WRITE'] = getattr(self, 'write_format', 'latex')
+    tsk.dep_nodes += getattr(self, 'dep_nodes', [])
+    #out_source = lhs_source.change_ext('.latex', '.lhs')
+    #tsk2 = self.create_task('lhs2tex', [lhs_source], out_source)
+    #tsk2.env.append_value('LHSFLAGS', '--include=' + lhs_preamble.path_from(self.bld.bldnode))
+    #tsk2.dep_nodes.append(lhs_preamble)
     self.__dict__.setdefault('compiled_src', [])
     self.compiled_src.extend(tsk.outputs)
 

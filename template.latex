@@ -5,6 +5,10 @@
 
 \input{preamble.latex}
 
+$if(highlighting-macros)$
+$highlighting-macros$
+$endif$
+
 \begin{document}
 $include-before$
 

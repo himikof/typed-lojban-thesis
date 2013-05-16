@@ -10,17 +10,19 @@ def configure(conf):
 def build(bld):
     sources = """
         Introduction.pd
-        ch_First/chapter.latex
-        ch_First/sec_Intro.pd
-        ch_First/sec_Moar.pd
-        ch_Second/chapter.latex
-        ch_Second/sec_Text.pd
+        ch_01/chapter.latex
+        ch_01/LojbanIntro.pd
+        ch_01/sec_Moar.pd
+        ch_02/chapter.latex
+        ch_02/Implementation.pdlhs
+        ch_03/chapter.latex
+        ch_03/sec_Text.pd
         Conclusion.pd
     """
     bld(features='pandoc-merge', source=sources + ' bib.bib', target='main.latex',
-            disabled_exts='fancy_lists', 
-            flags='-R -S --latex-engine=xelatex --listings --chapters',
-            linkflags='--toc --chapters -R', template='template.latex')
+            disabled_exts='fancy_lists', write_format='latex+lhs',
+            flags='-R -S --latex-engine=xelatex --listings --no-highlight --chapters',
+            linkflags='--toc --chapters --no-highlight -R', template='template.latex')
 
     # Outputs main.pdf
     bld(features='tex', type='xelatex', source='main.latex', prompt=True)
