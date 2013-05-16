@@ -1,0 +1,22 @@
+\title{Применение систем типов и формальных грамматик для анализа искусственного языка Ложбан}
+\author{Офицеров Н. А.\\
+Научный руководитель: Малаховски Я. М.}
+
+
+\input{preamble.latex}
+
+\begin{document}
+$include-before$
+
+\input{Title.latex}
+
+$if(toc)$
+\tableofcontents
+$endif$
+
+$body$
+
+\bibliography{bib}
+
+$include-after$
+\end{document}
