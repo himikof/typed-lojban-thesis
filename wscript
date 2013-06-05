@@ -12,11 +12,11 @@ def build(bld):
         Introduction.pd
         ch_01/chapter.latex
         ch_01/LojbanIntro.pd
-        ch_01/sec_Moar.pd
         ch_02/chapter.latex
-        ch_02/Implementation.pdlhs
+        ch_02/sec_Text.pd
         ch_03/chapter.latex
-        ch_03/sec_Text.pd
+        ch_03/ImplDescription.pd
+        ch_03/Implementation.pdlhs
         Conclusion.pd
     """
     bld(features='pandoc-merge', source=sources + ' bib.bib', target='main.latex',

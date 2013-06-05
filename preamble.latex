@@ -14,6 +14,8 @@
 \setmainlanguage{russian}
 \setotherlanguage{english}
 
+\usepackage{verbatim}
+
 \usepackage[numbers]{natbib}
 %\bibliographystyle{utf8gost705u}
 \bibliographystyle{utf8gost705u}
@@ -119,7 +121,7 @@
     }
 }
 
-\usepackage{enumitem}
+\usepackage[shortlabels]{enumitem}
 \makeatletter
 \AddEnumerateCounter{\asbuk}{\@asbuk}{м)}
 \makeatother
