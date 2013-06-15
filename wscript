@@ -12,8 +12,11 @@ def build(bld):
         Introduction.pd
         ch_01/chapter.latex
         ch_01/LojbanIntro.pd
+        ch_01/FormalGrammars.pd
         ch_02/chapter.latex
-        ch_02/sec_Text.pd
+        ch_02/FormalLojban.pd
+        ch_02/Typing.pd
+        ch_02/TypingInHaskell.pd
         ch_03/chapter.latex
         ch_03/ImplDescription.pd
         ch_03/Implementation.pdlhs

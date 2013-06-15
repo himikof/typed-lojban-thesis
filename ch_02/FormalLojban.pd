@@ -1,0 +1,78 @@
+Формализация подмножества языка Ложбан
+--------------------------------------
+
+В связи с тем, что полное описание языка Ложбан имеет достаточно большой
+объём, данная работа сосредотачивается на некотором основном подмножестве
+языка, определяемом далее.
+
+### Рассматриваемое подмножество языка ###
+
+Концептуально, язык Ложбан строится вокруг операции применения предиката к
+набору аргументов. Поэтому можно сказать, что основа языка является расширением
+математического языка исчисления предикатов.
+\begin{grammar}
+<sentence> ::= <quantifier> <variable> <sentence>
+  \alt `¬' <sentence>
+  \alt <sentence> <logical-connective> <sentence>
+  \alt <predicate> `(' <variable> ( <variable> `.' )$\,\ast$ `)'
+
+<quantifier> ::= `∀' | `∃'
+
+<logical-connective> ::= `∧' | `∨' | `⇒'
+\end{grammar}
+
+После перевода в термины Ложбан получается следующий язык, где
+\synt{cmene} (имена, идентификаторы) играют роль переменных, а
+\synt{brivla} (простые предопределённый предикаты) --- предикатов.
+В роли отрицания выступает \lit{na}, кванторов всеобщности и существования ---
+\lit{ro} и \lit{su'o}, соответственно. В данном случае применяются неявные
+определения переменных (включая кванторы) при использовании.
+
+\begin{grammar}
+<sentence> ::= <terms> [`cu'] <selbri> <terms>
+
+<terms> ::= <sumti>+
+
+<selbri> ::= `na' <selbri>
+  \alt <brivla>
+
+<sumti> ::= <quantifier> <sumti>
+
+<simple-sumti> ::= `la' <cmene>
+
+<quantifier> ::= `ro' | `su\'o' | <empty>
+\end{grammar}
+
+В данной работе используется похожий язык, с дополнительными расширениями
+и конструкциями.
+
+\begin{grammar}
+<sentence> ::= <terms> [`cu'] <bridi-tail>
+
+<bridi-tail> ::= <selbri> <terms>
+
+<terms> ::= <term>+
+
+<term> ::= <sumti>
+  \alt <place-tag> <sumti>
+  \alt `na' `ku'
+
+<selbri> ::= `na' <selbri>
+  \alt <selbri> <tanru-op> <selbri>
+  \alt <brivla>
+  \alt `ke' <selbri> `ke\'e'
+
+<tanru-op> ::= `co' | <empty> | `bo'
+
+<sumti> ::= <quantifier> <sumti>
+
+<simple-sumti> ::= `la' <cmene>
+  \alt <LE> <selbri> [`ku']
+  \alt <KOhA>
+
+<quantifier> ::= `ro' | `su\'o' | <empty>
+
+<LE> ::= `le' | `lo'
+
+<KOhA> ::= `mi' | `do' | `ti' | `ta' | `tu' | `zo\'e'
+\end{grammar}

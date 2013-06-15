@@ -1,5 +1,7 @@
 /build/
 .waf-*
+waf-*
 .lock-waf_*
 /*.bib~*
+*~
 *.pyc

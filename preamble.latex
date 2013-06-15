@@ -9,6 +9,7 @@
 \setmainfont{Liberation Serif}
 \setsansfont{Liberation Sans}
 \newfontfamily{\cyrillicfonttt}{Liberation Mono}
+\newfontfamily{\umath}{TeX Gyre Pagella Math}
 
 \usepackage{polyglossia}
 \setmainlanguage{russian}
@@ -50,6 +51,10 @@
 \renewcommand{\cftparskip}{-1mm}
 \renewcommand{\cftdotsep}{1}
 \setcounter{tocdepth}{2}
+
+\usepackage[nounderscore]{syntax}
+\setlength{\grammarindent}{8em} % increase separation between LHS/RHS 
+\renewcommand{\ulitleft}{\normalfont\ttfamily\umath\frenchspacing}
 
 \usepackage{listings}
 \lstloadlanguages{Haskell}
@@ -135,8 +140,10 @@
 \usepackage[bookmarks=true,unicode=true,pdfstartview={FitV},hidelinks]{hyperref}
 \usepackage[all]{hypcap}
 
-\usepackage{mathtools}
+% \usepackage{mathtools}
 
+\usepackage{unicode-math}
+\setmathfont{xits-math.otf}
 
 % For some reason those are missing in polyglossia
 \def\bbljan{янв}
