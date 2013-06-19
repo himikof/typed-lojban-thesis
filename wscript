@@ -14,8 +14,8 @@ def build(bld):
         ch_01/LojbanIntro.pd
         ch_01/FormalGrammars.pd
         ch_02/chapter.latex
-        ch_02/FormalLojban.pd
         ch_02/Typing.pd
+        ch_02/FormalLojban.pd
         ch_02/TypingInHaskell.pd
         ch_03/chapter.latex
         ch_03/ImplDescription.pd
