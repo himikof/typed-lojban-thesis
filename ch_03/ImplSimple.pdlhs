@@ -1,0 +1,80 @@
+Базовые определения
+-------------------
+
+Далее в работе вводятся базовые определения, общие для
+всех представлений.
+
+В языке Ложбан значительное число частиц, особенно
+терминаторов, являются опциональными. Для кодирования этого
+факта используется функтор `Elidable`.
+
+> type Elidable = Maybe
+
+Определяются используемые классы служебных частиц, согласно
+классификации из формальной грамматики[@cll].
+
+> data NA = Na deriving (Eq, Generic)
+> data KE = Ke deriving (Eq, Generic)
+> data KEhE = Ke'e deriving (Eq, Generic)
+> data KU = Ku deriving (Eq, Generic)
+> data LE = Le | Lo deriving (Eq, Generic)
+> data KOhA = Mi | Do | Ti | Ta | Tu | Zo'e
+>   deriving (Eq, Generic, Typeable)
+> data Quantifier = EmptyQ | Ro | Su'o deriving (Eq, Generic)
+> data UI = Ui deriving (Eq, Generic, Typeable)
+> data CAI = Cai|Cu'i|Pei|Sai|Ne'e deriving (Eq, Generic, Typeable)
+> data NAI = Nai deriving (Eq, Generic, Typeable)
+
+Простая типизация
+-----------------
+
+Для начала предоставим простую типизацию, соответствующую
+формальной грамматике.
+
+> data Sumti = Sumti Quantifier SimpleSumti
+
+> data SimpleSumti
+>   = La Word
+>   | ProSumti KOhA
+>   | LESumti LE LESumtiCtx Selbri
+
+> data Selbri
+>   = Brivla Word
+>   | Tanru TanruOp TanruOpCtx Selbri Selbri
+>   | NASelbri Selbri
+
+Опциональный терминатор `ku` представлен в виде _контекста_ элемента.
+В контекст выделяется часть элемента, которая не может повлиять на его смысл.
+Контексты влияют исключительно на отображение грамматического дерева в
+конкретный текст.
+
+> data LESumtiCtx = LESumtiCtx { hasKu :: Bool }
+> defaultLEC :: LESumtiCtx
+> defaultLEC = LESumtiCtx { hasKu = False }
+> mkKu :: LESumtiCtx -> Elidable KU
+> mkKu c = if hasKu c then Just Ku else Nothing
+
+Аналогично, присутствие явных скобок `ke`...`ke'e` вокрут оператора `tanru`
+представлено в виде контекста.
+
+> data KeState = HasKEAndKEhE | HasKE | HasNone
+> data TanruOpCtx = TanruOpCtx { keState :: KeState }
+> defaultTC :: TanruOpCtx
+> defaultTC = TanruOpCtx { keState = HasNone }
+
+> mkKe :: TanruOpCtx -> Elidable KE
+> mkKe c = case keState c of
+>   HasNone -> Nothing
+>   _       -> Just Ke
+> mkKe'e :: TanruOpCtx -> Elidable KEhE
+> mkKe'e c = case keState c of
+>   HasKEAndKEhE -> Just Ke'e
+>   _            -> Nothing
+
+Оператор групповой аппликации `GroupApp` соответствует записи `s1 s2`, 
+т.е. фактическому отсутствию оператора. Он называется так по аналогии с
+аппликацией функций в языке Haskell.
+
+> data TanruOp = GroupApp | Bo | Co deriving (Eq, Generic)
+
+

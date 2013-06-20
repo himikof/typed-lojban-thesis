@@ -19,7 +19,9 @@ def build(bld):
         ch_02/TypingInHaskell.pd
         ch_03/chapter.latex
         ch_03/ImplDescription.pd
+        ch_03/ImplSimple.pdlhs
         ch_03/Implementation.pdlhs
+        ch_03/Results.pd
         Conclusion.pd
     """
     bld(features='pandoc-merge', source=sources + ' bib.bib', target='main.latex',
