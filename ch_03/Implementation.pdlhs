@@ -246,6 +246,7 @@
 >   _            -> Nothing
 
 Операторы, образующий `tanru` --- сложные комбинированные предикаты:
+
  - ``Selbri `tanruApp` Selbri``: пишется как "Selbri Selbri", приоритет 6, левоассоциативный
  - ``Selbri `bo` Selbri``: приоритет 9, правоассоциативный
  - ``ke [Selbri]``: пишется как "ke Selbri Selbri ... Selbri [ke'e]", скобки
