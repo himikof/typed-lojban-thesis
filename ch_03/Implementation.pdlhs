@@ -1,27 +1,20 @@
 Реализация
 -----------
 
+### Типы выражений ###
+
+В данном разделе приводятся конструкции, из которых составляется
+типы выражений языка.
+
 Тип аргументов предиката `sumti`:
 
 > data Sumti = Sumti Quantifier SimpleSumti
 >   deriving (Eq, Generic, Typeable)
-> instance Textful Sumti where
->   untype (Sumti EmptyQ s) = untype s
->   untype (Sumti q s) = mkTNode (liftedUntype (q, s)) [] []
 
 > data SimpleSumti where
 >   La :: Word -> SimpleSumti
 >   ProSumti :: KOhA -> SimpleSumti
 >   LESumti :: forall n. LE -> LESumtiCtx -> Selbri n -> SimpleSumti
-> instance Eq SimpleSumti where
->   (La w1) == (La w2) = w1 == w2
->   (ProSumti p1) == (ProSumti p2) = p1 == p2
->   (LESumti le1 ctx1 s1) ==  (LESumti le2 ctx2 s2) = 
->       and [le1 == le2, s1 `eqT1` s2]
-> instance Textful SimpleSumti where
->   untype (La w) = TLeaf w
->   untype (ProSumti ps) = untype ps
->   untype (LESumti d c s) = mkTNode [] [untype d] $ liftedUntype (s, mkKu c)
 
 Тип предикатов `selbri`, c известной арностью.
 Включает простые однословные предикаты (`brivla`),
@@ -30,31 +23,16 @@
 > data Selbri :: Nat -> * where
 >   Brivla :: Word -> Selbri n
 >   Tanru :: TanruOp -> TanruOpCtx -> Selbri l -> Selbri r -> Selbri r
->   NASelbri :: Selbri n -> Selbri n
+>   NASelbri :: NA -> Selbri n -> Selbri n
 
-> arityEq :: forall n m. (SingI n, SingI m) => 
->   Selbri n -> Selbri m -> Maybe (n :~: m)
-> arityEq _ _ = (sing :: Sing n) `singEq` (sing :: Sing m)
-> instance EqT Selbri where
->   x@(Brivla _) `eqT0` y@(Brivla _) = x `arityEq` y
->   x@(Tanru _ _ _ _) `eqT0` y@(Tanru _ _ _ _) = x `arityEq` y
->   (NASelbri s1) `eqT0` (NASelbri s2) = s1 `eqT0` s2 >>= return . liftEq
->   _ `eqT0` _ = Nothing
-> instance Eq (Selbri n) where
->   x@(Brivla w1) == y@(Brivla w2) = and [x `eqT1` y, w1 == w2]
->   (Tanru op1 _ l1 r1) == (Tanru op2 _ l2 r2) =
->       and [op1 == op2, l1 `eqT1` l2, r1 `eqT1` r2]
->   (NASelbri s1) == (NASelbri s2) = s1 == s2
->   _ == _ = False
+Теги индексов слотов (FA):
 
-> instance Textful (Selbri n) where
->   untype (Brivla w) = TLeaf w
->   untype (Tanru op ctx l r) = mkTNode [untype $ mkKe ctx, ul] [untype op]
->                                       [ur, untype $ mkKe'e ctx] where
->       (ul, ur) = untypeArgsOrdered op l r
->       untypeArgsOrdered Co l r = (untype r, untype l)
->       untypeArgsOrdered _ l r = (untype l, untype r)
->   untype (NASelbri s) = mkTNode [untype Na] [untype s] []
+> data FA :: Nat -> * where
+>   Fa :: FA 0
+>   Fe :: FA 1
+>   Fi :: FA 2
+>   Fo :: FA 3
+>   Fu :: FA 4
 
 Определение термов. Терм --- или аргумент (возможно, с тегом места),
 или NA+KU (специальный терм для 'явной границы области естественного отрицания').
@@ -69,43 +47,16 @@
 >   IndexedTerm :: FA n -> Sumti -> Term (TPFixed n)
 >   NaKuTerm :: NA -> KU -> Term TPPhantom
 
-> instance EqT Term where
->   SumtiTerm _ `eqT0` SumtiTerm _ = Just Refl
->   IndexedTerm tag _ `eqT0` IndexedTerm tag' _ = liftEq <$> tag `eqT0` tag'
->   NaKuTerm _ _ `eqT0` NaKuTerm _ _ = Just Refl
->   _ `eqT0` _ = Nothing
-> instance Eq (Term n) where
->   SumtiTerm s == SumtiTerm s' = s `eqT` s'
->   IndexedTerm tag s == IndexedTerm tag' s' = and [tag == tag', s `eqT` s']
->   NaKuTerm na ku == NaKuTerm na' ku' = and [na == na', ku == ku']
->   _ == _ = False
-> instance Textful (Term n) where
->   untype (SumtiTerm s) = untype s
->   untype (IndexedTerm tag s) = mkTNode [untype tag] [untype s] []
->   untype (NaKuTerm na ku) = mkTNode [] (liftedUntype (na, ku)) []
-
 Определение списка термов. Вид `TermsState` определяется следующим образом 
 --- в нём хранятся индекс следующего свободного слота и арность рассмотренной
-части предиката. Объект типа `TermsF a b` --- это список (последовательность) термов,
-стартующая в состоянии `a :: TermState` и заканчивающаяся в состоянии `b :: TermState`.
+части предиката. Объект типа \mbox{\texttt{TermsF a b}}&nbsp;--- это список 
+(последовательность) термов, стартующая в состоянии 
+\mbox{\texttt{a :: TermState}} и заканчивающаяся в состоянии \mbox{\texttt{b :: TermState}}.
 Существование такого объекта, одновременно, является доказательством существования
 пути между этими состояниями.
 
 > data TermsState = TState { nextPlaceIndex :: Nat, placeArity :: Nat }
 > type TSDefault = TState 0 0
-
-Преобразования между повышенными типами-одиночками и обычными типами, изоморфными им.
-
-> newtype instance Sing (a :: TermsState) = STermsState (Integer, Integer)
-> instance (SingI a, SingI b) => SingI (TState (a :: Nat) (b :: Nat)) where
->   sing = STermsState (fromSing (sing :: Sing a), fromSing (sing :: Sing b))
-> instance SingE (KindOf (TState 0 0)) where
->   type DemoteRep (KindOf (TState 0 0)) = (Integer, Integer)
->   fromSing (STermsState s) = s
-> singEq :: (SingE (kp :: KindIs k), Eq (DemoteRep (kp :: KindIs k))) =>
->   Sing (a :: k) -> Sing (b :: k) -> Maybe (a :~: b)
-> singEq s1 s2 | fromSing s1 == fromSing s2 = Just (unsafeCoerce Refl)
->              | otherwise = Nothing
 
 Непосредственное определение списка термов. Списки конструируются специальными операторами
 `:#:`, `:#?` и `:#|`, выполняющими вычисление (в типах) нового состояния.
@@ -131,7 +82,146 @@
 > infixr 5 :#?
 > infixr 5 :#|
 
-Сопутствующние экземпляры для `TermsF`: сравнение и вывод.
+Хвосты высказываний (англ. bridi-tails) представляют собой
+расходящиеся части логически объединённого сложного высказывания.
+Например, `mi klama le zarci .ije mi nelci la djan.` эквивалентно
+`mi klama le zarci gi'e nelci la djan.`. Структура параметров типа аналогична
+`TermsF`. Стоит обратить внимание на ограничение $arity <= n$ --- оно проверяется
+во время проверки типов.
+
+> data family BridiTailF (s :: TermsState) :: TermsState -> *
+> data instance BridiTailF s0 sx where
+>   SelbriBT :: (arity <= n) => Selbri n -> TermsF s0 (TState ni arity)
+>       -> BridiTailF s0 (TState ni arity)
+
+Тип высказывания:
+
+> data Bridi :: Nat -> * where
+>   Bridi :: TermsF TSDefault s0 -> BridiTailF s0 (TState ni arity) -> Bridi arity
+
+Определение `tanru` --- сложных комбинированных предикатов.
+Контекст кодирует наличие опциональных скобок `ke ... ke'e`.
+
+> data KeState = HasKEAndKEhE | HasKE | HasNone
+> data TanruOpCtx = TanruOpCtx { keState :: KeState }
+> data TanruOp = GroupApp | Bo | Co deriving (Eq, Generic)
+
+Дескрипторы (артикли) --- преобразование предикатов в аргументы.
+Контекст кодирует наличие опционального терминатора `ku`.
+
+> data LESumtiCtx = LESumtiCtx { hasKu :: Bool }
+
+### EDSL ###
+
+В этом разделе сосредоточены определения, делающие работу с языком Ложбан 
+в виде EDSL более удобной.
+
+Функции для создания простых высказываний:
+
+> bridi1 :: Selbri 1 -> Sumti -> Bridi 1
+> bridi1 s x1 = Bridi (SumtiTerm x1 :#? TNil) $ SelbriBT s TNil
+> bridi2 :: Selbri 2 -> Sumti -> Sumti -> Bridi 2
+> bridi2 s x1 x2 = Bridi (SumtiTerm x1 :#? TNil) $ SelbriBT s 
+>   (SumtiTerm x2 :#? TNil)
+> bridi3 :: Selbri 3 -> Sumti -> Sumti -> Sumti -> Bridi 3
+> bridi3 s x1 x2 x3 = Bridi (SumtiTerm x1 :#? TNil) $ SelbriBT s
+>   (SumtiTerm x2 :#? SumtiTerm x3 :#? TNil)
+> bridi4 :: Selbri 4 -> Sumti -> Sumti -> Sumti -> Sumti -> Bridi 4
+> bridi4 s x1 x2 x3 x4 = Bridi (SumtiTerm x1 :#? TNil) $ SelbriBT s
+>   (SumtiTerm x2 :#? SumtiTerm x3 :#? SumtiTerm x4 :#? TNil)
+
+Операторы `tanru` --- сложные комбинированные предикаты:
+
+ - ``Selbri `tanruApp` Selbri``: пишется как "Selbri Selbri", приоритет 6, левоассоциативный
+ - ``Selbri `bo` Selbri``: приоритет 9, правоассоциативный
+ - ``ke [Selbri]``: пишется как "ke Selbri Selbri ... Selbri [ke'e]", скобки
+ - ``Selbri `co` Selbri``: инверсия порядка, приоритет 5, правоассоциативный, разбивает ke...ke'e
+
+> infixl 6 `tanruApp`
+> tanruApp :: Selbri l -> Selbri r -> Selbri r
+> l `tanruApp` r = Tanru GroupApp defaultTC l r
+> infixr 9 `bo`
+> bo :: Selbri l -> Selbri r -> Selbri r
+> l `bo` r = Tanru Bo defaultTC l r
+> infixr 5 `co`
+> co :: Selbri r -> Selbri l -> Selbri r
+> r `co` l = Tanru Co defaultTC l r
+
+Функции, оборачивающие операторы `tanru` в скобки `ke..ke'e`.
+
+> modifyTanruOpCtx :: (TanruOpCtx -> TanruOpCtx) -> Selbri n -> Selbri n
+> modifyTanruOpCtx f (Tanru op c l r) = Tanru op (f c) l r
+> updateKeState :: KeState -> Selbri n -> Selbri n
+> updateKeState s = modifyTanruOpCtx (\c -> c {keState = s})
+
+> ke :: Selbri n -> Selbri n
+> ke = updateKeState HasKE
+> keKe'e :: Selbri n -> Selbri n
+> keKe'e = updateKeState HasKEAndKEhE
+
+Функции для работы с операторами, конвертирующими `selbri` в `sumti`:
+
+> defaultLEC :: LESumtiCtx
+> defaultLEC = LESumtiCtx { hasKu = False }
+
+> lo :: Selbri n -> Sumti
+> lo = Sumti Su'o . LESumti Lo defaultLEC
+> loKu :: Selbri n -> Sumti
+> loKu = Sumti Su'o . LESumti Lo defaultLEC { hasKu = True }
+> lе :: Selbri n -> Sumti
+> lе = Sumti Ro . LESumti Le defaultLEC
+> lеKu :: Selbri n -> Sumti
+> lеKu = Sumti Ro . LESumti Le defaultLEC { hasKu = True }
+
+### Эквивалентность ###
+
+В этом разделе определяется эквивалентность на типизированных выражениях.
+Если в случае простой типизации компилятор способен самостоятельно определить
+(вывести) соответствующие экземпляры, то в данном случае
+эквивалентность реализуется более сложным образом. Во многих случаях, прежде
+чем сравнить соответствующую пару подвыражений какой-либо пары выражений
+между собой, компилятору необходимо явно доказать, что их типы совпадают.
+Данную задачу в следующем коде выполняет класс `EqT`.
+
+> class EqT (f :: k -> *) where
+>   eqT0 :: f a -> f b -> Maybe (a :~: b)
+
+> eqT1 :: (Eq (f b), EqT f) => f a -> f b -> Bool
+> eqT1 x y = case x `eqT0` y of
+>   Just proof -> coerce1 proof x == y
+>   Nothing -> False
+
+> instance Eq SimpleSumti where
+>   (La w1) == (La w2) = w1 == w2
+>   (ProSumti p1) == (ProSumti p2) = p1 == p2
+>   (LESumti le1 ctx1 s1) ==  (LESumti le2 ctx2 s2) = 
+>       and [le1 == le2, s1 `eqT1` s2]
+
+> arityEq :: forall n m. (SingI n, SingI m) => 
+>   Selbri n -> Selbri m -> Maybe (n :~: m)
+> arityEq _ _ = (sing :: Sing n) `singEq` (sing :: Sing m)
+> instance EqT Selbri where
+>   x@(Brivla _) `eqT0` y@(Brivla _) = x `arityEq` y
+>   x@(Tanru _ _ _ _) `eqT0` y@(Tanru _ _ _ _) = x `arityEq` y
+>   (NASelbri _ s1) `eqT0` (NASelbri _ s2) = s1 `eqT0` s2 >>= return . liftEq
+>   _ `eqT0` _ = Nothing
+> instance Eq (Selbri n) where
+>   x@(Brivla w1) == y@(Brivla w2) = and [x `eqT1` y, w1 == w2]
+>   (Tanru op1 _ l1 r1) == (Tanru op2 _ l2 r2) =
+>       and [op1 == op2, l1 `eqT1` l2, r1 `eqT1` r2]
+>   (NASelbri na1 s1) == (NASelbri na2 s2) = and [na1 == na2, s1 == s2]
+>   _ == _ = False
+
+> instance EqT Term where
+>   SumtiTerm _ `eqT0` SumtiTerm _ = Just Refl
+>   IndexedTerm tag _ `eqT0` IndexedTerm tag' _ = liftEq <$> tag `eqT0` tag'
+>   NaKuTerm _ _ `eqT0` NaKuTerm _ _ = Just Refl
+>   _ `eqT0` _ = Nothing
+> instance Eq (Term n) where
+>   SumtiTerm s == SumtiTerm s' = s `eqT` s'
+>   IndexedTerm tag s == IndexedTerm tag' s' = and [tag == tag', s `eqT` s']
+>   NaKuTerm na ku == NaKuTerm na' ku' = and [na == na', ku == ku']
+>   _ == _ = False
 
 > instance EqT (TermsF s0) where
 >   TNil `eqT0` TNil = Just Refl
@@ -157,56 +247,8 @@
 >   (x :#? xs) == (y :#? ys) = and [x == y, xs `eqT1` ys]
 >   (x :#| xs) == (y :#| ys) = and [x == y, xs `eqT1` ys]
 
-> untypeTermsF' :: TermsF s0 s -> [TextTree]
-> untypeTermsF' TNil = []
-> untypeTermsF' (x :#: xs) = untype x : untypeTermsF' xs
-> untypeTermsF' (x :#? xs) = untype x : untypeTermsF' xs
-> untypeTermsF' (x :#| xs) = untype x : untypeTermsF' xs
-> instance Textful (TermsF s0 s) where
->   untype xs = mkTNode (untypeTermsF' xs) [] []
-
-Хвосты высказываний (англ. `bridi`-tails) представляют собой
-расходящиеся части логически объединённого сложного высказывания.
-Например, `mi klama le zarci .ije mi nelci la djan.` эквивалентно
-`mi klama le zarci gi'e nelci la djan.`. Структура параметров типа аналогична
-`TermsF`.
-
-> data family BridiTailF (s :: TermsState) :: TermsState -> *
-> data instance BridiTailF s0 sx where
->   SelbriBT :: (arity <= n) => Selbri n -> TermsF s0 (TState ni arity)
->       -> BridiTailF s0 (TState ni arity)
-> instance Textful (BridiTailF s0 s) where
->   untype (SelbriBT s ts) = mkTNode [] [untype s] [untype ts]
-
-Тип высказывания:
-
-> data Bridi :: Nat -> * where
->   Bridi :: TermsF TSDefault s0 -> BridiTailF s0 (TState ni arity) -> Bridi arity
-> instance Textful (Bridi arity) where
->   untype (Bridi prefix tail) = mkTNode [untype prefix] [untype tail] []
-
-Функции для создания простых высказываний:
-
-> bridi1 :: Selbri 1 -> Sumti -> Bridi 1
-> bridi1 s x1 = Bridi (SumtiTerm x1 :#? TNil) $ SelbriBT s TNil
-> bridi2 :: Selbri 2 -> Sumti -> Sumti -> Bridi 2
-> bridi2 s x1 x2 = Bridi (SumtiTerm x1 :#? TNil) $ SelbriBT s 
->   (SumtiTerm x2 :#? TNil)
-> bridi3 :: Selbri 3 -> Sumti -> Sumti -> Sumti -> Bridi 3
-> bridi3 s x1 x2 x3 = Bridi (SumtiTerm x1 :#? TNil) $ SelbriBT s
->   (SumtiTerm x2 :#? SumtiTerm x3 :#? TNil)
-> bridi4 :: Selbri 4 -> Sumti -> Sumti -> Sumti -> Sumti -> Bridi 4
-> bridi4 s x1 x2 x3 x4 = Bridi (SumtiTerm x1 :#? TNil) $ SelbriBT s
->   (SumtiTerm x2 :#? SumtiTerm x3 :#? SumtiTerm x4 :#? TNil)
-
 Теги индексов слотов (FA):
 
-> data FA :: Nat -> * where
->   Fa :: FA 0
->   Fe :: FA 1
->   Fi :: FA 2
->   Fo :: FA 3
->   Fu :: FA 4
 > instance EqT FA where
 >   Fa `eqT0` Fa = Just Refl
 >   Fe `eqT0` Fe = Just Refl
@@ -215,8 +257,55 @@
 >   Fu `eqT0` Fu = Just Refl
 >   _ `eqT0` _ = Nothing
 > deriving instance Eq (FA n)
-> deriving instance Show (FA n)
 
+### Вспомогательные определения ###
+
+В этом разделе сосредоточены определения, связанные с преобразованием между
+типизированным AST и текстом (точнее, нетипизированным деревом разбора).
+
+> instance Textful Sumti where
+>   untype (Sumti EmptyQ s) = untype s
+>   untype (Sumti q s) = mkTNode (liftedUntype (q, s)) [] []
+
+> mkKu :: LESumtiCtx -> Elidable KU
+> mkKu c = if hasKu c then Just Ku else Nothing
+
+> instance Textful SimpleSumti where
+>   untype (La w) = TLeaf w
+>   untype (ProSumti ps) = untype ps
+>   untype (LESumti d c s) = mkTNode [] [untype d] $ liftedUntype (s, mkKu c)
+
+> instance Textful (Selbri n) where
+>   untype (Brivla w) = TLeaf w
+>   untype (Tanru op ctx l r) = mkTNode [untype $ mkKe ctx, ul] [untype op]
+>                                       [ur, untype $ mkKe'e ctx] where
+>       (ul, ur) = untypeArgsOrdered op l r
+>       untypeArgsOrdered Co l r = (untype r, untype l)
+>       untypeArgsOrdered _ l r = (untype l, untype r)
+>   untype (NASelbri na s) = mkTNode [untype na] [untype s] []
+
+> instance Textful (Term n) where
+>   untype (SumtiTerm s) = untype s
+>   untype (IndexedTerm tag s) = mkTNode [untype tag] [untype s] []
+>   untype (NaKuTerm na ku) = mkTNode [] (liftedUntype (na, ku)) []
+
+> untypeTermsF' :: TermsF s0 s -> [TextTree]
+> untypeTermsF' TNil = []
+> untypeTermsF' (x :#: xs) = untype x : untypeTermsF' xs
+> untypeTermsF' (x :#? xs) = untype x : untypeTermsF' xs
+> untypeTermsF' (x :#| xs) = untype x : untypeTermsF' xs
+> instance Textful (TermsF s0 s) where
+>   untype xs = mkTNode (untypeTermsF' xs) [] []
+
+> instance Textful (BridiTailF s0 s) where
+>   untype (SelbriBT s ts) = mkTNode [] [untype s] [untype ts]
+
+> instance Textful (Bridi arity) where
+>   untype (Bridi prefix tail) = mkTNode [untype prefix] [untype tail] []
+
+Теги индексов слотов (FA):
+
+> deriving instance Show (FA n)
 > instance Textful (FA n) where
 >   untype Fa = TLeaf "Fa"
 >   untype Fe = TLeaf "Fe"
@@ -225,16 +314,6 @@
 >   untype Fu = TLeaf "Fu"
 > tagIndex :: forall n. SingI n => FA n -> Int
 > tagIndex _ = fromInteger $ fromSing (sing :: Sing n)
-
-Определение `tanru` --- сложных комбинированных предикатов.
-
-Контекст кодирует наличие опциональных скобок `ke ... ke'e`.
-
-> data KeState = HasKEAndKEhE | HasKE | HasNone
-
-> data TanruOpCtx = TanruOpCtx { keState :: KeState }
-> defaultTC :: TanruOpCtx
-> defaultTC = TanruOpCtx { keState = HasNone }
 
 > mkKe :: TanruOpCtx -> Elidable KE
 > mkKe c = case keState c of
@@ -245,51 +324,21 @@
 >   HasKEAndKEhE -> Just Ke'e
 >   _            -> Nothing
 
-Операторы, образующий `tanru` --- сложные комбинированные предикаты:
-
- - ``Selbri `tanruApp` Selbri``: пишется как "Selbri Selbri", приоритет 6, левоассоциативный
- - ``Selbri `bo` Selbri``: приоритет 9, правоассоциативный
- - ``ke [Selbri]``: пишется как "ke Selbri Selbri ... Selbri [ke'e]", скобки
- - ``Selbri `co` Selbri``: инверсия порядка, приоритет 5, правоассоциативный, разбивает ke...ke'e
-
-> data TanruOp = GroupApp | Bo | Co deriving (Eq, Generic)
 > instance Textful TanruOp where
 >   untype GroupApp = emptyTNode
 >   untype Bo = TLeaf "bo"
 >   untype Co = TLeaf "co"
 
-> modifyTanruOpCtx :: (TanruOpCtx -> TanruOpCtx) -> Selbri n -> Selbri n
-> modifyTanruOpCtx f (Tanru op c l r) = Tanru op (f c) l r
+Преобразования между повышенными типами-одиночками и обычными типами, изоморфными им.
 
-> infixl 6 `tanruApp`
-> tanruApp :: Selbri l -> Selbri r -> Selbri r
-> l `tanruApp` r = Tanru GroupApp defaultTC l r
-> infixr 9 `bo`
-> bo :: Selbri l -> Selbri r -> Selbri r
-> l `bo` r = Tanru Bo defaultTC l r
-> infixr 5 `co`
-> co :: Selbri r -> Selbri l -> Selbri r
-> r `co` l = Tanru Co defaultTC l r
-
-> updateKeState :: KeState -> Selbri n -> Selbri n
-> updateKeState s = modifyTanruOpCtx (\c -> c {keState = s})
-> ke :: Selbri n -> Selbri n
-> ke = updateKeState HasKE
-> keKe'e :: Selbri n -> Selbri n
-> keKe'e = updateKeState HasKEAndKEhE
-
-Дескрипторы (артикли) --- преобразование предикатов в аргументы.
-
-> data LESumtiCtx = LESumtiCtx { hasKu :: Bool }
-> defaultLEC :: LESumtiCtx
-> defaultLEC = LESumtiCtx { hasKu = False }
-> mkKu :: LESumtiCtx -> Elidable KU
-> mkKu c = if hasKu c then Just Ku else Nothing
-
-
-> lo :: (Selbri n s) => s -> LESumti
-> lo = LESumti Lo defaultLEC
-> loKu :: (Selbri n s) => s -> LESumti
-> loKu = LESumti Lo defaultLEC { hasKu = True }
-
+> newtype instance Sing (a :: TermsState) = STermsState (Integer, Integer)
+> instance (SingI a, SingI b) => SingI (TState (a :: Nat) (b :: Nat)) where
+>   sing = STermsState (fromSing (sing :: Sing a), fromSing (sing :: Sing b))
+> instance SingE (KindOf (TState 0 0)) where
+>   type DemoteRep (KindOf (TState 0 0)) = (Integer, Integer)
+>   fromSing (STermsState s) = s
+> singEq :: (SingE (kp :: KindIs k), Eq (DemoteRep (kp :: KindIs k))) =>
+>   Sing (a :: k) -> Sing (b :: k) -> Maybe (a :~: b)
+> singEq s1 s2 | fromSing s1 == fromSing s2 = Just (unsafeCoerce Refl)
+>              | otherwise = Nothing
 

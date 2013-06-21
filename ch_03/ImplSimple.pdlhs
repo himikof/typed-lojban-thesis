@@ -21,9 +21,6 @@
 > data KOhA = Mi | Do | Ti | Ta | Tu | Zo'e
 >   deriving (Eq, Generic, Typeable)
 > data Quantifier = EmptyQ | Ro | Su'o deriving (Eq, Generic)
-> data UI = Ui deriving (Eq, Generic, Typeable)
-> data CAI = Cai|Cu'i|Pei|Sai|Ne'e deriving (Eq, Generic, Typeable)
-> data NAI = Nai deriving (Eq, Generic, Typeable)
 
 Простая типизация
 -----------------
@@ -41,7 +38,7 @@
 > data Selbri
 >   = Brivla Word
 >   | Tanru TanruOp TanruOpCtx Selbri Selbri
->   | NASelbri Selbri
+>   | NASelbri NA Selbri
 
 Опциональный терминатор `ku` представлен в виде _контекста_ элемента.
 В контекст выделяется часть элемента, которая не может повлиять на его смысл.
