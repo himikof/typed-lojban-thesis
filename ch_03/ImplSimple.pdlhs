@@ -16,6 +16,7 @@
 > data NA = Na deriving (Eq, Generic)
 > data KE = Ke deriving (Eq, Generic)
 > data KEhE = Ke'e deriving (Eq, Generic)
+> data CU = Cu deriving (Eq, Generic)
 > data KU = Ku deriving (Eq, Generic)
 > data LE = Le | Lo deriving (Eq, Generic)
 > data KOhA = Mi | Do | Ti | Ta | Tu | Zo'e
@@ -39,6 +40,14 @@
 >   = Brivla Word
 >   | Tanru TanruOp TanruOpCtx Selbri Selbri
 >   | NASelbri NA Selbri
+
+> data Term
+>   = SumtiTerm Sumti
+>   | IndexedTerm FA Sumti
+>   | NaKuTerm NA KU
+
+> data BridiTail = BridiTail Selbri [Term]
+> data Bridi = Bridi [Term] (Elidable CU) BridiTail
 
 Опциональный терминатор `ku` представлен в виде _контекста_ элемента.
 В контекст выделяется часть элемента, которая не может повлиять на его смысл.
